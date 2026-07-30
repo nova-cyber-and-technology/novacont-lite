@@ -1,3 +1,5 @@
+<div align="center">
+
 # NovaCont Lite
 
 **A minimal, non-custodial escrow contract for TON, accessible as a Telegram Mini App.**
@@ -11,6 +13,8 @@ Native TON. Deterministic timeouts. No custodian, ever.
 
 [Documentation](https://novacont.gitbook.io/nova-docs) · [Telegram Bot](https://t.me/NovaCont_Lite_bot) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
+</div>
+
 ---
 
 ## Project Status
@@ -19,9 +23,9 @@ NovaCont Lite is **live on TON** and accessible through [@NovaCont_Lite_bot](htt
 
 | | |
 | --- | --- |
-| Contract address | `PLACEHOLDER_TON_ADDRESS` |
+| Contract address | `EQBE_CfERNFq87KvPunGzEcakNAzb3NPIqVxlWvouWp952hZ` |
 | Version | v1.2.0 |
-| Deployed | `PLACEHOLDER_DEPLOY_DATE` |
+| Deployed | 30 July 2026 |
 | Source | [`contracts/NovaCont_Lite.tact`](contracts/NovaCont_Lite.tact) at tag [`v1.2.0`](../../releases/tag/v1.2.0) |
 
 See [Verifying the deployed contract](#verifying-the-deployed-contract) for how to confirm that the source in this repository is what is actually running at that address.
@@ -60,7 +64,7 @@ The absence of an oracle in Lite is worth noting: the collateral threshold is de
 
 - **Non-custodial by construction.** Locked TON lives at the contract address, not in any NOVA-controlled wallet.
 - **Deterministic settlement.** Every state transition and its outcome is fixed in contract logic, not decided case by case.
-- **No path to permanently stuck funds.** A provider can claim payment via timeout if the client goes silent, a client is refunded if the provider never accepts, and since v1.2.0 a dispute that nobody resolves can be settled by either party after the dispute timeout.
+- **No path to permanently stuck funds.** A provider can claim payment via timeout if the client goes silent, a client is refunded if the provider never accepts, and since v1.2.0 a dispute that nobody resolves can be settled by either party after `DISPUTE_TIMEOUT`.
 - **Minimal by choice.** No Jettons, no oracle, no jury. Each of those is a dependency and an attack surface; Lite does without them on purpose.
 - **Honest about centralization.** Disputes here are resolved by a designated support team rather than an independent juror pool, and this README says so rather than describing Lite as fully decentralized.
 
@@ -72,7 +76,7 @@ The absence of an oracle in Lite is worth noting: the collateral threshold is de
 - Adaptive collateral: agreements under 10 TON require a 1.25x deposit (the surplus is refundable, never paid to the provider)
 - 3% platform fee, deducted at settlement from the provider's payment
 - 7-day review window after delivery, with a provider-claimable timeout
-- Dispute timeout: an unresolved dispute can be settled by either party once the timeout elapses, so no dispute can lock funds indefinitely
+- 30-day dispute timeout: an unresolved dispute can be settled by either party once it elapses, so no dispute can lock funds indefinitely
 - Configurable accept and delivery deadlines, specified in days plus hours
 - Dedicated support pool with round-robin assignment: when a dispute is raised, the next support member in rotation is assigned to it on-chain, so no single reviewer is a bottleneck
 - Proportional dispute resolution via basis points, a reviewer can split funds anywhere between 0 and 100%, not just all-or-nothing
@@ -98,7 +102,7 @@ Cancelled          Cancelled             dispute
                                               ▼
                                           Disputed ──resolve──────> Completed
                                               │
-                                              └─ dispute timeout ─> Completed
+                                              └─ after 30 days ───> Completed
                                                  (either party settles)
 ```
 
@@ -108,7 +112,7 @@ The six on-chain states are `Created`, `Accepted`, `Delivered`, `Completed`, `Ca
 - **Accepted**: the delivery countdown starts. Either party can still raise a dispute from here.
 - **Delivered**: the provider has submitted an evidence URL and the client's 7-day review window opens. The client can approve or dispute; if they do neither, the provider can claim the timeout.
 - **Completed / Cancelled**: terminal. Funds have been distributed.
-- **Disputed**: normal flow stops. The support member assigned at dispute time resolves it with a `clientShareBps` split and a stated reason. If no resolution arrives before the dispute timeout, either party can settle the escrow themselves.
+- **Disputed**: normal flow stops. The support member assigned at dispute time resolves it with a `clientShareBps` split and a stated reason. If no resolution arrives within `DISPUTE_TIMEOUT`, either party can settle the escrow themselves.
 
 Every branch terminates, and every branch has a path out that does not depend on NOVA acting. That second property is what v1.2.0 added; in earlier versions a dispute that nobody resolved had no exit.
 
@@ -122,8 +126,8 @@ Read directly from `contracts/NovaCont_Lite.tact`:
 | ------------------------- | -------- | -------------------------------------------------------------- |
 | `PLATFORM_FEE_BPS`        | 300      | 3% platform fee                                                |
 | `EXTRA_DEPOSIT_THRESHOLD` | 10 TON   | Below this, a 1.25x deposit is required                        |
-| `REVIEW_TIMEOUT`          | 7 days   | Client review window after delivery                            |
-| `PLACEHOLDER_DISPUTE_TIMEOUT_NAME` | `PLACEHOLDER_DISPUTE_TIMEOUT_VALUE` | After this, either party can settle an unresolved dispute |
+| `REVIEW_TIMEOUT`          | 604800   | 7-day client review window after delivery                      |
+| `DISPUTE_TIMEOUT`         | 2592000  | 30 days, after which either party can settle an open dispute   |
 | `STORAGE_RESERVE`         | 0.05 TON | Reserved per transfer to keep the contract rent-solvent on TON |
 
 `STORAGE_RESERVE` exists because TON charges storage rent; without reserving a small amount per outbound transfer, a contract can eventually be frozen and its data lost. This is a TON-specific concern with no equivalent on Base.
@@ -149,10 +153,10 @@ This contract is **not currently registered on [verifier.ton.org](https://verifi
 
 | | |
 | --- | --- |
-| Contract address | `PLACEHOLDER_TON_ADDRESS` |
-| Source tag | `v1.2.0`, commit `PLACEHOLDER_COMMIT_SHA` |
-| Tact compiler | `PLACEHOLDER_TACT_VERSION` |
-| Expected code cell hash | `PLACEHOLDER_CODE_CELL_HASH` |
+| Contract address | `EQBE_CfERNFq87KvPunGzEcakNAzb3NPIqVxlWvouWp952hZ` |
+| Source | tag [`v1.2.0`](../../releases/tag/v1.2.0) |
+| Tact compiler | `1.6.13` |
+| Expected code cell hash | `CovTqdSE67kFr8EWNA0qdT5IaqbgxEtr278NPnqh97k=` |
 
 To reproduce:
 
@@ -160,11 +164,19 @@ To reproduce:
 git clone https://github.com/nova-cyber-and-technology/novacont-lite
 cd novacont-lite
 git checkout v1.2.0
-npm ci
-npx blueprint build --all
+npm install
+npx tact --config tact.config.json
 ```
 
-The build output under `build/` contains the compiled code cell. Its hash should equal the expected hash above, and that hash should equal the code hash reported for the contract address by any TON explorer or by `runGetMethod` against a public RPC endpoint. If all three agree, the source in this repository is the code running on chain.
+Then hash the compiled code cell:
+
+```bash
+node -e "const {Cell}=require('@ton/core');const fs=require('fs');console.log(Cell.fromBoc(fs.readFileSync('build/NovaCont_Lite_NovaCont_Lite.code.boc'))[0].hash().toString('base64'))"
+```
+
+The exact filename under `build/` follows the project and contract names in `tact.config.json`; list the directory if it differs.
+
+That hash should equal the expected hash above, and it should equal the code hash reported for the contract address by any TON explorer. If all three agree, the source in this repository is the code running on chain.
 
 Two things worth knowing if your hash does not match:
 
@@ -193,7 +205,7 @@ Round one, fixed in v1.1.0:
 
 Round two, fixed in v1.2.0:
 
-- **Disputes had no resolution deadline.** An unresolved dispute left funds locked with no exit. Either party can now settle after the dispute timeout. This is the most user-facing fix in the contract's history and it is the reason the Terms of Service were rewritten alongside it.
+- **Disputes had no resolution deadline.** An unresolved dispute left funds locked with no exit. Either party can now settle after `DISPUTE_TIMEOUT`. This is the most user-facing fix in the contract's history and it is the reason the Terms of Service were rewritten alongside it.
 - **No ownership transfer and no pause.** Neither existed. A contract holding funds needs a way to hand over control and a way to stop new agreements during an incident.
 - **Removing a support member did not revoke their authority.** A removed member kept the ability to resolve disputes already assigned to them. Revocation now applies to existing assignments.
 
@@ -220,7 +232,7 @@ Found a vulnerability? Don't open a public Issue, follow [SECURITY.md](SECURITY.
 Tact generates TypeScript wrappers at build time, so integrating doesn't require a separate SDK. Compile the contract, then use the generated wrapper with [`@ton/ton`](https://github.com/ton-org/ton):
 
 ```ts
-import { TonClient, WalletContractV4, internal, toNano } from "@ton/ton";
+import { TonClient, toNano } from "@ton/ton";
 import { NovaCont_Lite } from "./build/NovaCont_Lite";
 
 const client = new TonClient({ endpoint: "<your TON RPC endpoint>" });
@@ -260,13 +272,13 @@ Either party can raise a dispute while an agreement is in `Accepted` or `Deliver
 2. **A support member is assigned automatically.** The contract picks the next address from the support pool in round-robin order and writes it to the agreement's `assignedSupport` field. If the pool is empty, no member is assigned and the contract owner is the only party who can resolve.
 3. **The assigned member reviews the evidence** shared through the support channel and decides how funds should be split.
 4. **`ResolveDispute` is sent on-chain** with a `clientShareBps` value between 0 and 10000 and a written reason. The split executes immediately and the reason is stored on-chain, queryable by anyone.
-5. **If no resolution arrives before the dispute timeout**, either party can settle the escrow themselves. This is the backstop that keeps a dispute from becoming a permanent lock, and it does not require NOVA to act or even to exist.
+5. **If no resolution arrives within 30 days**, either party can settle the escrow themselves. This is the backstop that keeps a dispute from becoming a permanent lock, and it does not require NOVA to act or even to exist.
 
 Three properties worth calling out:
 
 - **Resolution is proportional, not binary.** `clientShareBps` lets a reviewer award any split, including partial outcomes where both parties are partly right.
 - **Every verdict carries a public reason.** The reasoning is stored in contract state alongside the split, so a resolution can be audited after the fact by anyone, not just the parties involved.
-- **Inaction has a defined outcome.** The dispute timeout means the worst case for a user is a delay, not a loss.
+- **Inaction has a defined outcome.** The 30-day timeout means the worst case for a user is a delay, not a loss.
 
 The trust assumption this leaves in place is stated under [Known Limitations](#known-limitations).
 
@@ -277,6 +289,7 @@ The trust assumption this leaves in place is stated under [Known Limitations](#k
 Stated plainly rather than left for a reader to discover:
 
 - **Dispute resolution is centralized.** When a dispute is raised, the contract assigns the next support member from the pool in round-robin order, and that member resolves it. The contract owner holds the same resolve authority in parallel, and is the only resolver if the support pool is empty. Rotating assignment spreads the workload and removes an operational single point of failure, but it does not remove the trust assumption: resolvers are chosen by NOVA, not by the parties or by an independent pool.
+- **The owner can pause new agreements.** Added in v1.2.0 as an incident control. Existing agreements continue to settle, but the ability to halt intake is a centralization point and is listed here rather than only in the changelog.
 - **No appeal mechanism.** A resolution is final once executed on-chain.
 - **Off-chain evidence.** Evidence URLs point to external resources; the contract can't guarantee they remain reachable.
 - **Native TON only.** No Jetton support. This is a deliberate simplification, not an oversight.
@@ -303,7 +316,7 @@ Licensed under the [PolyForm Shield License 1.0.0](LICENSE). You're free to read
 
 ---
 
-## Contact
+<div align="center">
 
 | Purpose           | Channel                                |
 | ----------------- | -------------------------------------- |
@@ -313,3 +326,5 @@ Licensed under the [PolyForm Shield License 1.0.0](LICENSE). You're free to read
 
 **NOVA Cyber & Technology**
 *Building Secure, Digital Futures.*
+
+</div>
