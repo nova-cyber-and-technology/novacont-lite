@@ -1,0 +1,21 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Node
+node_modules/
+
+# Tact/Build Artifacts
+src/contracts/
+build/
+*.boc
+*.fif
+*.abi
+*.pkg
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
