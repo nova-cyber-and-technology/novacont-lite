@@ -26,7 +26,7 @@ NovaCont Lite is **live on TON** and accessible through [@NovaCont_Lite_bot](htt
 | Contract address | `EQBE_CfERNFq87KvPunGzEcakNAzb3NPIqVxlWvouWp952hZ` |
 | Version | v1.2.0 |
 | Deployed | 30 July 2026 |
-| Source | [`contracts/NovaCont_Lite.tact`](contracts/NovaCont_Lite.tact) at tag [`v1.2.0`](../../releases/tag/v1.2.0) |
+| Source | [`contract/NovaCont_Lite.tact`](contract/NovaCont_Lite.tact) at tag [`v1.2.0`](../../releases/tag/v1.2.0) |
 
 See [Verifying the deployed contract](#verifying-the-deployed-contract) for how to confirm that the source in this repository is what is actually running at that address.
 
@@ -120,7 +120,7 @@ Every branch terminates, and every branch has a path out that does not depend on
 
 ## Contract Constants
 
-Read directly from `contracts/NovaCont_Lite.tact`:
+Read directly from `contract/NovaCont_Lite.tact`:
 
 | Constant                  | Value    | Meaning                                                        |
 | ------------------------- | -------- | -------------------------------------------------------------- |
@@ -137,11 +137,14 @@ Read directly from `contracts/NovaCont_Lite.tact`:
 ## Repository Structure
 
 ```
-contracts/
+contract/
   NovaCont_Lite.tact   The escrow contract
 tact.config.json       Compiler configuration, required to reproduce the build
 package.json           Pins the exact Tact compiler version
+package-lock.json      Locks the full dependency tree
 ```
+
+Compiled output is written to `src/contracts/` and is not committed.
 
 The Telegram Mini App frontend and bot backend are not published in this repository.
 
@@ -164,23 +167,23 @@ To reproduce:
 git clone https://github.com/nova-cyber-and-technology/novacont-lite
 cd novacont-lite
 git checkout v1.2.0
-npm install
-npx tact --config tact.config.json
+npm ci
+npm run build
 ```
 
 Then hash the compiled code cell:
 
 ```bash
-node -e "const {Cell}=require('@ton/core');const fs=require('fs');console.log(Cell.fromBoc(fs.readFileSync('build/NovaCont_Lite_NovaCont_Lite.code.boc'))[0].hash().toString('base64'))"
+node -e "const {Cell}=require('@ton/core');const fs=require('fs');console.log(Cell.fromBoc(fs.readFileSync('src/contracts/NovaContLite_NovaContLite.code.boc'))[0].hash().toString('base64'))"
 ```
 
-The exact filename under `build/` follows the project and contract names in `tact.config.json`; list the directory if it differs.
+The filename follows the project and contract names in `tact.config.json`, both of which are `NovaContLite`. List `src/contracts/` if your output differs.
 
 That hash should equal the expected hash above, and it should equal the code hash reported for the contract address by any TON explorer. If all three agree, the source in this repository is the code running on chain.
 
 Two things worth knowing if your hash does not match:
 
-- `tact.config.json` in this repository has debug mode **disabled**, which is what the deployed build used. A debug build produces a different code cell.
+- `tact.config.json` in this repository has debug mode **enabled**, and that is the configuration the deployed build used. Compiling with debug disabled produces a different code cell, so do not change this flag when reproducing.
 - The Tact compiler version must match exactly. A different minor version can produce different output from identical source.
 
 Registration on verifier.ton.org is still intended, and this section will be replaced by a link to it once that is done.
@@ -233,11 +236,11 @@ Tact generates TypeScript wrappers at build time, so integrating doesn't require
 
 ```ts
 import { TonClient, toNano } from "@ton/ton";
-import { NovaCont_Lite } from "./build/NovaCont_Lite";
+import { NovaContLite } from "./src/contracts/NovaContLite_NovaContLite";
 
 const client = new TonClient({ endpoint: "<your TON RPC endpoint>" });
 const escrow = client.open(
-  NovaCont_Lite.fromAddress(CONTRACT_ADDRESS)
+  NovaContLite.fromAddress(CONTRACT_ADDRESS)
 );
 
 // Read state
@@ -260,7 +263,7 @@ await escrow.send(
 );
 ```
 
-Exact wrapper names come from the Tact build output; check `build/` after compiling rather than copying the names above verbatim.
+Exact wrapper names come from the Tact build output; check `src/contracts/` after compiling rather than copying the names above verbatim.
 
 ---
 
