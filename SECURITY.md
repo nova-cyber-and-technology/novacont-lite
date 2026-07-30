@@ -118,7 +118,7 @@ We won't pursue legal action against researchers who act in good faith:
 
 | Component | Status |
 |---|---|
-| `contracts/NovaCont_Lite.tact` | ✅ In scope |
+| `contract/NovaCont_Lite.tact` | ✅ In scope |
 
 **Out of scope:**
 
